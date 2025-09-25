@@ -1,11 +1,12 @@
 class Note {
-    constructor(title = '', content = '', tags = [], author = '', date = new Date()) {
+    constructor(title = '', content = '', tags = [], author = '', date = new Date(), colour = '#ffffff') {
         this.id = crypto.randomUUID();
         this._title = title;
         this._content = content;
         this.author = author;
         this.date = date;
         this.tags = tags;
+        this.colour = colour;
     }
 
     get title() {
@@ -32,20 +33,22 @@ class Note {
             content: this.content,
             date: this.date,
             tags: this.tags,
+            colour: this.colour,
         }
     }
 
     static fromJSON(obj) {
-        const n = new Note(obj.title, obj.content, obj.tags, obj.author, obj.date);
+        const n = new Note(obj.title, obj.content, obj.tags, obj.author, obj.date, obj.colour);
         n.id = obj.id;
         return n;
     }
 }
 
 class NotesList {
-    constructor() {
+    constructor(tagList) {
         this.storageKey = 'myNotes';
         this.notes = [];
+        this.tagList = tagList;
         this.loadNotes();
     }
 
@@ -71,10 +74,13 @@ class NotesList {
         const titleVal = document.querySelector(`.note-title[data-id="${note}"]`);
         const contentVal = document.querySelector(`.note-content[data-id="${note}"]`);
         const tagsVal = document.querySelector(`.note-tag-list[data-id="${note}"]`);
+        const colourVal = document.querySelector(`.note-colour[data-id="${note}"]`);
 
         noteObj.title = titleVal.value;
         noteObj.content = contentVal.value;
+        noteObj.colour = colourVal.value;
         noteObj.tags = tagsVal.value.split(", ");
+
         this.saveNotes();
     }
 
@@ -95,7 +101,7 @@ class NotesList {
         const newTagEl = document.createElement('input');
         newTagEl.type = 'text';
         newTagEl.classList.add('note-tag-list');
-        newTagEl.classList.add('input-border');
+        // newTagEl.classList.add('input-border');
         newTagEl.setAttribute('placeholder', 'Tags...');
         newTagEl.setAttribute('data-id', noteId);
         newTagEl.value = oldTagEl.textContent || noteObj.tags.join(', ');
@@ -104,8 +110,8 @@ class NotesList {
         const noteTitle = document.querySelector(`.note-title[data-id="${noteId}"]`);
         const noteContent = document.querySelector(`.note-content[data-id="${noteId}"]`);
 
-        noteTitle.classList.add('input-border');
-        noteContent.classList.add('input-border');
+        // noteTitle.classList.add('input-border');
+        // noteContent.classList.add('input-border');
 
         if (targetClass.classList.contains('note-card') || (targetClass.classList.contains('add-note-button') || targetClass.classList.contains('add-note-icon') || targetClass.classList.contains('add-note-link'))) {
             noteTitle.focus();
@@ -142,6 +148,10 @@ class NotesUI {
         this.notesDiv = document.querySelector('.notes-list');
     }
 
+    tagListMethod() {
+        console.log(this.tagsList);
+    }
+
     refreshNotes() {
         this.notesDiv.innerHTML = '';
 
@@ -155,6 +165,7 @@ class NotesUI {
     renderNote(note) {
         const div = document.createElement('div');
         div.classList.add('note-card');
+        div.style.backgroundColor = `${note.colour}a6`;
         div.dataset.id = note.id;
         div.innerHTML = `
             <input type="text" class="note-title" data-id="${note.id}" value="${note.title}" placeholder="Title...">
@@ -163,7 +174,8 @@ class NotesUI {
             <br>
             <span class="note-tag-list" data-id="${note.id}"></span>
             <br>
-            <button type="button" class="delete-note" data-id="${note.id}">Delete</button>
+            <button type="button" class="delete-note" data-id="${note.id}"></button>
+            <input type="color" class="note-colour" name="note-colour" data-id="${note.id}" value="${note.colour}">
         `;
         this.notesDiv.appendChild(div);
         this.renderTags(note);
@@ -195,27 +207,28 @@ class NotesUI {
 // Current tags are not linked up to these objects, how to link them?
 
 class Tag {
-    constructor(name, colour) {
+    constructor(name) {
+        this.id = crypto.randomUUID();
         this.name = name;
-        this.colour = colour;
     }
 
     toJSON() {
         return {
+            id: this.id,
             name: this.name,
-            colour: this.colour,
         }
     }
 
     static fromJSON(obj) {
-        const n = new Tag(obj.name, obj.colour);
+        const n = new Tag(obj.name);
+        n.id = obj.id;
         return n;
     }
 }
 
 class TagList {
     constructor() {
-        this.storageKey = 'myTags';
+        this.storageKey = 'myTagList';
         this.tags = [];
         this.loadTags();
     }
@@ -232,8 +245,8 @@ class TagList {
 
     seedTags() {
         this.tags = [
-            new Tag('shopping', 'white'),
-            new Tag('job', 'blue'),
+            new Tag('job-hunting'),
+            new Tag('books'),
         ];
         this.saveTags();
     }
@@ -241,14 +254,15 @@ class TagList {
 
 class NotesApp {
     constructor() {
-        this.notesList = new NotesList();
         this.tagList = new TagList();
+        this.notesList = new NotesList(this.tagList);
         this.notesUI = new NotesUI(this.notesList, this.tagList);
     }
 
     init() {
         this.notesUI.refreshNotes();
         this.bindEvents();
+        this.notesUI.tagListMethod();
     }
 
     bindEvents() {
@@ -269,14 +283,20 @@ class NotesApp {
                 }
                 this.notesList.focusNote(noteCard.dataset.id, e.target);
             }
-            if (!noteCard) {
+        })
+
+        document.addEventListener('click', e => {
+            const notesListArea = e.target.closest('.notes-list');
+            const addButton = e.target.closest('.add-note-button');
+
+            if (!notesListArea && !addButton) {
                 const focusedElements = document.querySelectorAll('.input-border');
                 if (focusedElements.length > 0) {
                     const noteId = focusedElements[0].dataset.id;
                     this.notesUI.unfocusNote(noteId);
                 }
             }
-        })
+        });
 
         notesList.addEventListener('input', e => {
             if (e.target.classList.contains('note-title')) {
@@ -290,6 +310,13 @@ class NotesApp {
             }
         })
 
+        notesList.addEventListener('change', e => {
+            if (e.target.classList.contains('note-colour')) {
+                this.notesList.updateNote(e.target.dataset.id);
+                this.notesUI.refreshNotes();
+            }
+        })
+
         button.addEventListener('click', e => {
             const newNote = this.notesList.addNote();
             this.notesUI.refreshNotes();
@@ -300,3 +327,7 @@ class NotesApp {
 
 const app = new NotesApp();
 app.init();
+
+// Add search/filter function
+// Add ability to add colours to notes
+// Add tag searching (if no tag found, a new tag can be added)
