@@ -343,6 +343,4 @@ class NotesApp {
 const app = new NotesApp();
 app.init();
 
-// Add search/filter function
-// Add ability to add colours to notes
 // Add tag searching (if no tag found, a new tag can be added)

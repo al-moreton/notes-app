@@ -104,6 +104,10 @@ textarea {
     border: 1px solid black;
 }
 
+input {
+    box-sizing: border-box
+}
+
 .notes-header {
     text-align: center;
 }
@@ -113,10 +117,14 @@ textarea {
     font-size: 20px;
     margin-bottom: 15px;
     width: 100%;
+    border-radius: 3px;
+    border: 1px solid black;
 }
 
 .delete-note {
     margin-top: 10px;
+    background: none;
+    border: none;
 }
 
 .delete-note::after {
