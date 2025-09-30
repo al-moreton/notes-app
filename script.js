@@ -152,14 +152,23 @@ class NotesUI {
         console.log(this.tagsList);
     }
 
-    refreshNotes() {
+    filterNotes(str) {
+        const filteredView = this.notesList.notes.filter(n =>
+            n.title.toLowerCase().includes(str.toLowerCase()) 
+            || n.content.toLowerCase().includes(str.toLowerCase()) 
+            || n.tags.some(tag => tag.toLowerCase().includes(str.toLowerCase()))
+        );
+        return filteredView;
+    }
+
+    refreshNotes(filteredArray = this.notesList.notes) {
         this.notesDiv.innerHTML = '';
 
-        if (this.notesList.notes.length === 0) {
+        if (filteredArray.length === 0) {
             this.notesDiv.innerHTML = 'No notes found!'
         }
 
-        this.notesList.notes.forEach(note => this.renderNote(note));
+        filteredArray.forEach(note => this.renderNote(note));
     }
 
     renderNote(note) {
@@ -268,6 +277,12 @@ class NotesApp {
     bindEvents() {
         const notesList = document.querySelector('.notes-list');
         const button = document.querySelector('.add-note-button');
+
+        document.addEventListener('input', e => {
+            if (e.target.classList.contains('filter-notes')) {
+                this.notesUI.refreshNotes(this.notesUI.filterNotes(e.target.value));
+            }
+        })
 
         notesList.addEventListener('click', e => {
             const noteCard = e.target.closest('.note-card');

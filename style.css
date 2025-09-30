@@ -104,8 +104,24 @@ textarea {
     border: 1px solid black;
 }
 
+.notes-header {
+    text-align: center;
+}
+
+.filter-notes {
+    padding: 10px;
+    font-size: 20px;
+    margin-bottom: 15px;
+    width: 100%;
+}
+
 .delete-note {
     margin-top: 10px;
+}
+
+.delete-note::after {
+    font-family: 'FontAwesome';
+    content: '\f1f8';
 }
 
 .title {
